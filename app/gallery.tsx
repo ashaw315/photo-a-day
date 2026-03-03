@@ -98,7 +98,8 @@ export function Gallery({ initialPosts }: { initialPosts: Post[] }) {
               {post.caption}
             </p>
             <time className="mt-1 block font-serif text-xs text-white/50">
-              {new Date(post.date + 'T00:00:00').toLocaleDateString('en-US', {
+              {new Date(post.date).toLocaleDateString('en-US', {
+                timeZone: 'UTC',
                 month: 'short',
                 day: 'numeric',
                 year: 'numeric',

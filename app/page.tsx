@@ -12,5 +12,10 @@ export default async function Home() {
     LIMIT 20
   `;
 
-  return <Gallery initialPosts={result.rows as Post[]} />;
+  const posts = result.rows.map((row) => ({
+    ...row,
+    date: row.date instanceof Date ? row.date.toISOString().split('T')[0] : row.date,
+  })) as Post[];
+
+  return <Gallery initialPosts={posts} />;
 }
