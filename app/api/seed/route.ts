@@ -1,7 +1,12 @@
 // app/api/seed/route.ts
+import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const authHeader = request.headers.get('authorization');
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   await sql`
     CREATE TABLE IF NOT EXISTS posts (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

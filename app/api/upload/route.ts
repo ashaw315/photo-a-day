@@ -22,6 +22,13 @@ export async function POST(request: Request) {
   const buffer = Buffer.from(arrayBuffer);
 
   const today = new Date().toISOString().split('T')[0];
+
+  // Check if a post already exists for today
+  const existing = await sql`SELECT id FROM posts WHERE date = ${today}`;
+  if (existing.rows.length > 0) {
+    return NextResponse.json({ error: 'A photo has already been posted today' }, { status: 409 });
+  }
+
   const ext = file.type === 'image/png' ? 'png' : 'jpg';
   const key = `photos/${today}.${ext}`;
   const mediaType = file.type as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';

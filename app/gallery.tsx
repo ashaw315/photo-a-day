@@ -94,7 +94,7 @@ export function Gallery({ initialPosts }: { initialPosts: Post[] }) {
             className="h-full w-full object-contain"
           />
           <div className="absolute bottom-0 left-0 p-6">
-            <p className="font-serif text-sm font-light text-white/90">
+            <p className="font-serif text-sm font-normal text-white/90">
               {post.caption}
             </p>
             <time className="mt-1 block font-serif text-xs text-white/50">
