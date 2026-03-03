@@ -15,6 +15,8 @@ export default async function Home() {
   const posts = result.rows.map((row) => ({
     ...row,
     date: row.date instanceof Date ? row.date.toISOString().split('T')[0] : row.date,
+    created_at: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
+    updated_at: row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at,
   })) as Post[];
 
   return <Gallery initialPosts={posts} />;
