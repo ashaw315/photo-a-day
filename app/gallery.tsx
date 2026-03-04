@@ -22,9 +22,6 @@ export function Gallery({
   const sentinelRef = useRef<HTMLDivElement>(null);
   const slideRefs = useRef<Map<number, HTMLElement>>(new Map());
 
-  // Reverse so oldest is on the left, newest on the right
-  const ordered = [...allPosts].reverse();
-
   const loadMore = useCallback(async () => {
     if (loading || !nextCursor) return;
     setLoading(true);
@@ -47,10 +44,6 @@ export function Gallery({
     setNextCursor(data.nextCursor);
     setCurrentIndex(0);
     setLoading(false);
-    const container = containerRef.current;
-    if (container) {
-      container.scrollLeft = container.scrollWidth;
-    }
   }, []);
 
   // Infinite scroll — load more when sentinel becomes visible
@@ -71,7 +64,7 @@ export function Gallery({
     return () => observer.disconnect();
   }, [loadMore]);
 
-  // IntersectionObserver to track current snapped slide
+  // IntersectionObserver to track current visible slide
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -95,7 +88,7 @@ export function Gallery({
     }
 
     return () => observer.disconnect();
-  }, [ordered.length]);
+  }, [allPosts.length]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -114,10 +107,11 @@ export function Gallery({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Vertical scroll → horizontal scroll mapping
+  // Vertical scroll → horizontal scroll mapping (mouse/trackpad only, not touch)
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+    if (!window.matchMedia('(pointer: fine)').matches) return;
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
@@ -127,14 +121,6 @@ export function Gallery({
     container.addEventListener('wheel', handleWheel, { passive: false });
     return () => container.removeEventListener('wheel', handleWheel);
   }, []);
-
-  // Scroll to the end (most recent) on load and year change
-  useEffect(() => {
-    const container = containerRef.current;
-    if (container) {
-      container.scrollLeft = container.scrollWidth;
-    }
-  }, [allPosts]);
 
   function shouldRenderImage(index: number): boolean {
     return Math.abs(index - currentIndex) <= 2;
@@ -157,7 +143,7 @@ export function Gallery({
   }
 
   return (
-    <>
+    <div style={{ padding: 'env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)' }}>
       {/* Fixed header overlay */}
       <header className="fixed top-0 left-0 right-0 z-10 flex items-center justify-between px-6 py-4 pointer-events-none">
         <span
@@ -186,54 +172,63 @@ export function Gallery({
       <div
         ref={containerRef}
         className="no-scrollbar flex h-screen overflow-x-auto overflow-y-hidden items-end"
-        style={{ gap: '16px', paddingLeft: '24px', paddingRight: '24px' }}
+        style={{
+          gap: '16px',
+          paddingLeft: '24px',
+          paddingRight: '24px',
+          WebkitOverflowScrolling: 'touch',
+        }}
       >
-        {/* Sentinel for infinite scroll (loads older posts) */}
-        <div ref={sentinelRef} className="h-full w-px flex-shrink-0" />
-
-        {ordered.map((post, index) => (
+        {/* Render posts newest-first (already ORDER BY date DESC from API) */}
+        {allPosts.map((post, index) => (
           <article
             key={post.id}
             ref={(el) => setSlideRef(index, el)}
             data-index={index}
-            className="flex-shrink-0"
+            className="overflow-hidden"
+            style={{ width: '100vw', flexShrink: 0 }}
           >
-            <div className="flex flex-col items-start pb-6">
-              {shouldRenderImage(index) ? (
-                <Link href={`/photo/${post.date}`}>
-                  <img
-                    src={post.image_url}
-                    alt={post.caption}
-                    className="object-contain"
-                    style={{ height: 'calc(100vh - 100px)', maxWidth: '90vw' }}
+            <div style={{ paddingBottom: 'env(safe-area-inset-bottom, 24px)' }}>
+              <div className="flex flex-col items-start px-4 pb-6">
+                {shouldRenderImage(index) ? (
+                  <Link href={`/photo/${post.date}`}>
+                    <img
+                      src={post.image_url}
+                      alt={post.caption}
+                      className="object-contain"
+                      style={{ maxWidth: '100%', width: 'auto', height: 'auto', maxHeight: '75vh' }}
+                    />
+                  </Link>
+                ) : (
+                  <div
+                    style={{ maxHeight: '75vh', aspectRatio: '3/2', width: '100%' }}
                   />
-                </Link>
-              ) : (
-                <div
-                  style={{ height: 'calc(100vh - 100px)', aspectRatio: '3/2' }}
-                />
-              )}
-              <p
-                className="mt-2 font-sans"
-                style={{ fontSize: '13px', fontWeight: 300, color: 'var(--color-caption)' }}
-              >
-                {post.caption}
-              </p>
-              <time
-                className="mt-1 block font-sans"
-                style={{ fontSize: '11px', fontWeight: 300, color: 'var(--color-meta)' }}
-              >
-                {new Date(post.date).toLocaleDateString('en-US', {
-                  timeZone: 'UTC',
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
-              </time>
+                )}
+                <p
+                  className="mt-2 font-sans"
+                  style={{ fontSize: '13px', fontWeight: 300, color: 'var(--color-caption)' }}
+                >
+                  {post.caption}
+                </p>
+                <time
+                  className="mt-1 block font-sans"
+                  style={{ fontSize: '11px', fontWeight: 300, color: 'var(--color-meta)' }}
+                >
+                  {new Date(post.date).toLocaleDateString('en-US', {
+                    timeZone: 'UTC',
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </time>
+              </div>
             </div>
           </article>
         ))}
+
+        {/* Sentinel for infinite scroll (loads older posts) */}
+        <div ref={sentinelRef} className="h-full w-px flex-shrink-0" />
       </div>
-    </>
+    </div>
   );
 }

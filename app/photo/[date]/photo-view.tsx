@@ -89,30 +89,32 @@ export function PhotoView({
       )}
 
       {/* Photo + caption */}
-      <div className="flex flex-col items-center" style={{ padding: '0 15vw' }}>
+      <div className="flex flex-col items-center px-4 md:px-[15vw]">
         <img
           src={post.image_url}
           alt={post.caption}
           className="object-contain"
-          style={{ height: '90vh', maxWidth: '100%' }}
+          style={{ maxWidth: '100%', width: 'auto', height: 'auto', maxHeight: '75vh' }}
         />
-        <p
-          className="mt-3 font-sans text-center"
-          style={{ fontSize: '13px', fontWeight: 300, color: 'var(--color-caption)' }}
-        >
-          {post.caption}
-        </p>
-        <time
-          className="mt-1 block font-sans"
-          style={{ fontSize: '11px', fontWeight: 300, color: 'var(--color-meta)' }}
-        >
-          {new Date(post.date).toLocaleDateString('en-US', {
-            timeZone: 'UTC',
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-          })}
-        </time>
+        <div style={{ paddingBottom: 'env(safe-area-inset-bottom, 24px)' }}>
+          <p
+            className="mt-3 font-sans text-center"
+            style={{ fontSize: '13px', fontWeight: 300, color: 'var(--color-caption)' }}
+          >
+            {post.caption}
+          </p>
+          <time
+            className="mt-1 block font-sans text-center"
+            style={{ fontSize: '11px', fontWeight: 300, color: 'var(--color-meta)' }}
+          >
+            {new Date(post.date).toLocaleDateString('en-US', {
+              timeZone: 'UTC',
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            })}
+          </time>
+        </div>
       </div>
     </div>
   );
