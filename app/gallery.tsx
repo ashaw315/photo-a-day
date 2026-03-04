@@ -121,10 +121,7 @@ export function Gallery({
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      container.scrollBy({
-        left: e.deltaY + e.deltaX,
-        behavior: 'smooth',
-      });
+      container.scrollLeft += e.deltaY + e.deltaX;
     };
 
     container.addEventListener('wheel', handleWheel, { passive: false });
