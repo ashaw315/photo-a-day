@@ -1,16 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import type { Post } from '@/lib/db';
+import type { Post, FallbackImage } from '@/lib/db';
 
 interface AdminProps {
   initialPosts: Post[];
   fallbackCount: number;
   unusedFallbackCount: number;
+  fallbackImages: FallbackImage[];
 }
 
-export function AdminDashboard({ initialPosts, fallbackCount, unusedFallbackCount }: AdminProps) {
+export function AdminDashboard({ initialPosts, fallbackCount, unusedFallbackCount, fallbackImages }: AdminProps) {
   const [posts, setPosts] = useState(initialPosts);
+  const [showFallbacks, setShowFallbacks] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editCaption, setEditCaption] = useState('');
 
@@ -121,6 +123,44 @@ export function AdminDashboard({ initialPosts, fallbackCount, unusedFallbackCoun
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Fallback images section */}
+        <div className="mt-10 border-t border-neutral-900 pt-6">
+          <button
+            onClick={() => setShowFallbacks((v) => !v)}
+            className="font-serif text-xs text-neutral-500 hover:text-white"
+          >
+            {showFallbacks ? 'Hide' : 'Show'} fallback images ({fallbackImages.length})
+          </button>
+          {showFallbacks && (
+            <div className="mt-4 grid grid-cols-4 gap-3">
+              {fallbackImages.map((img) => (
+                <a
+                  key={img.id}
+                  href={img.image_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative"
+                >
+                  <img
+                    src={img.image_url}
+                    alt="Fallback"
+                    className="aspect-square w-full object-cover opacity-80 group-hover:opacity-100"
+                  />
+                  <span
+                    className={`absolute top-1 right-1 rounded px-1.5 py-0.5 font-serif text-[10px] ${
+                      img.used
+                        ? 'bg-neutral-700 text-neutral-400'
+                        : 'bg-green-900 text-green-400'
+                    }`}
+                  >
+                    {img.used ? 'used' : 'unused'}
+                  </span>
+                </a>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -47,7 +47,6 @@ export function Gallery({
     setNextCursor(data.nextCursor);
     setCurrentIndex(0);
     setLoading(false);
-    // Scroll to start (which will be scrolled to end after render)
     const container = containerRef.current;
     if (container) {
       container.scrollLeft = container.scrollWidth;
@@ -115,6 +114,20 @@ export function Gallery({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Vertical scroll → horizontal scroll mapping
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    function handleWheel(e: WheelEvent) {
+      e.preventDefault();
+      container!.scrollLeft += e.deltaY;
+    }
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, []);
+
   // Scroll to the end (most recent) on load and year change
   useEffect(() => {
     const container = containerRef.current;
@@ -169,10 +182,11 @@ export function Gallery({
         </select>
       </header>
 
-      {/* Horizontal scroll container */}
+      {/* Horizontal scroll container — film strip layout */}
       <div
         ref={containerRef}
-        className="no-scrollbar flex h-screen w-screen snap-x snap-mandatory overflow-x-auto overflow-y-hidden"
+        className="no-scrollbar flex h-screen snap-x snap-mandatory overflow-x-auto overflow-y-hidden items-end"
+        style={{ gap: '16px', paddingLeft: '24px', paddingRight: '24px' }}
       >
         {/* Sentinel for infinite scroll (loads older posts) */}
         <div ref={sentinelRef} className="h-full w-px flex-shrink-0" />
@@ -182,25 +196,26 @@ export function Gallery({
             key={post.id}
             ref={(el) => setSlideRef(index, el)}
             data-index={index}
-            className="flex h-screen w-screen flex-shrink-0 snap-center items-center justify-center"
+            className="flex-shrink-0 snap-start"
+            style={{ scrollSnapAlign: 'start' }}
           >
-            <div className="flex flex-col items-center" style={{ padding: '0 15vw' }}>
+            <div className="flex flex-col items-start pb-6">
               {shouldRenderImage(index) ? (
                 <Link href={`/photo/${post.date}`}>
                   <img
                     src={post.image_url}
                     alt={post.caption}
                     className="object-contain"
-                    style={{ height: '90vh', maxWidth: '100%' }}
+                    style={{ height: 'calc(100vh - 100px)', maxWidth: '90vw' }}
                   />
                 </Link>
               ) : (
                 <div
-                  style={{ height: '90vh', aspectRatio: '3/2' }}
+                  style={{ height: 'calc(100vh - 100px)', aspectRatio: '3/2' }}
                 />
               )}
               <p
-                className="mt-3 font-sans text-center"
+                className="mt-2 font-sans"
                 style={{ fontSize: '13px', fontWeight: 300, color: 'var(--color-caption)' }}
               >
                 {post.caption}
