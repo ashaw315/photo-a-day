@@ -172,38 +172,41 @@ export function Gallery({
       <div
         ref={containerRef}
         className="no-scrollbar flex h-screen overflow-x-auto overflow-y-hidden items-end"
-        style={{
-          gap: '16px',
-          paddingLeft: '24px',
-          paddingRight: '24px',
-          WebkitOverflowScrolling: 'touch',
-        }}
+        style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {/* Render posts newest-first (already ORDER BY date DESC from API) */}
-        {allPosts.map((post, index) => (
-          <article
-            key={post.id}
-            ref={(el) => setSlideRef(index, el)}
-            data-index={index}
-            className="overflow-hidden"
-            style={{ width: '100vw', flexShrink: 0 }}
-          >
-            <div style={{ paddingBottom: 'env(safe-area-inset-bottom, 24px)' }}>
-              <div className="flex flex-col items-start px-4 pb-6">
-                {shouldRenderImage(index) ? (
-                  <Link href={`/photo/${post.date}`}>
-                    <img
-                      src={post.image_url}
-                      alt={post.caption}
-                      className="object-contain"
-                      style={{ maxWidth: '100%', width: 'auto', height: 'auto', maxHeight: '75vh' }}
-                    />
-                  </Link>
-                ) : (
-                  <div
-                    style={{ maxHeight: '75vh', aspectRatio: '3/2', width: '100%' }}
-                  />
-                )}
+        {allPosts.map((post, index) => {
+          const isFirst = index === 0;
+          const isLast = index === allPosts.length - 1;
+
+          return (
+            <article
+              key={post.id}
+              ref={(el) => setSlideRef(index, el)}
+              data-index={index}
+              className="w-screen flex-shrink-0 overflow-hidden md:w-auto"
+              style={{
+                paddingLeft: isFirst ? '48px' : '24px',
+                paddingRight: isLast ? '48px' : '24px',
+              }}
+            >
+              <div
+                className="flex flex-col items-start"
+                style={{ paddingBottom: 'env(safe-area-inset-bottom, 24px)' }}
+              >
+                <div className="img-slot">
+                  {shouldRenderImage(index) ? (
+                    <Link href={`/photo/${post.date}`} className="block h-full">
+                      <img
+                        src={post.image_url}
+                        alt={post.caption}
+                        className="h-full w-auto object-contain"
+                      />
+                    </Link>
+                  ) : (
+                    <div className="h-full" style={{ aspectRatio: '3/2' }} />
+                  )}
+                </div>
                 <p
                   className="mt-2 font-sans"
                   style={{ fontSize: '13px', fontWeight: 300, color: 'var(--color-caption)' }}
@@ -222,9 +225,9 @@ export function Gallery({
                   })}
                 </time>
               </div>
-            </div>
-          </article>
-        ))}
+            </article>
+          );
+        })}
 
         {/* Sentinel for infinite scroll (loads older posts) */}
         <div ref={sentinelRef} className="h-full w-px flex-shrink-0" />

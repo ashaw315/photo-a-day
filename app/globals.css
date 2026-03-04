@@ -33,6 +33,15 @@ body {
   display: none;
 }
 
+.img-slot {
+  height: 75vh;
+}
+@media (min-width: 768px) {
+  .img-slot {
+    height: 80vh;
+  }
+}
+
 .year-select {
   appearance: none;
   background: transparent;
