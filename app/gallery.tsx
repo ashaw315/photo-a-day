@@ -119,10 +119,13 @@ export function Gallery({
     const container = containerRef.current;
     if (!container) return;
 
-    function handleWheel(e: WheelEvent) {
+    const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      container!.scrollLeft += e.deltaY;
-    }
+      container.scrollBy({
+        left: e.deltaY + e.deltaX,
+        behavior: 'smooth',
+      });
+    };
 
     container.addEventListener('wheel', handleWheel, { passive: false });
     return () => container.removeEventListener('wheel', handleWheel);
@@ -185,7 +188,7 @@ export function Gallery({
       {/* Horizontal scroll container — film strip layout */}
       <div
         ref={containerRef}
-        className="no-scrollbar flex h-screen snap-x snap-mandatory overflow-x-auto overflow-y-hidden items-end"
+        className="no-scrollbar flex h-screen overflow-x-auto overflow-y-hidden items-end"
         style={{ gap: '16px', paddingLeft: '24px', paddingRight: '24px' }}
       >
         {/* Sentinel for infinite scroll (loads older posts) */}
@@ -196,8 +199,7 @@ export function Gallery({
             key={post.id}
             ref={(el) => setSlideRef(index, el)}
             data-index={index}
-            className="flex-shrink-0 snap-start"
-            style={{ scrollSnapAlign: 'start' }}
+            className="flex-shrink-0"
           >
             <div className="flex flex-col items-start pb-6">
               {shouldRenderImage(index) ? (
