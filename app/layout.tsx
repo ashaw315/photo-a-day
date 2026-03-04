@@ -1,15 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Crimson_Text } from "next/font/google";
+import { Inter, Crimson_Text } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["300", "400"],
+  variable: "--font-sans",
 });
 
 const serif = Crimson_Text({
@@ -31,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${serif.variable} antialiased`}
+        className={`${inter.variable} ${serif.variable} antialiased`}
       >
         {children}
       </body>
