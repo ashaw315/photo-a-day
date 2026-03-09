@@ -17,7 +17,10 @@ export function Gallery({
   );
   const [loading, setLoading] = useState(false);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  // Track visible index in a ref to avoid re-renders on every scroll tick.
+  // Only promote to state when the rendered window actually needs to shift.
+  const currentIndexRef = useRef(0);
+  const [renderedCenter, setRenderedCenter] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const slideRefs = useRef<Map<number, HTMLElement>>(new Map());
@@ -42,7 +45,8 @@ export function Gallery({
     const data = await res.json();
     setAllPosts(data.posts);
     setNextCursor(data.nextCursor);
-    setCurrentIndex(0);
+    currentIndexRef.current = 0;
+    setRenderedCenter(0);
     setLoading(false);
   }, []);
 
@@ -64,7 +68,9 @@ export function Gallery({
     return () => observer.disconnect();
   }, [loadMore]);
 
-  // IntersectionObserver to track current visible slide
+  // IntersectionObserver to track current visible slide.
+  // Updates a ref (no re-render) and only promotes to state when
+  // the rendered window needs to shift (> 1 slide from center).
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -75,7 +81,11 @@ export function Gallery({
           if (entry.isIntersecting) {
             const index = Number(entry.target.getAttribute('data-index'));
             if (!isNaN(index)) {
-              setCurrentIndex(index);
+              currentIndexRef.current = index;
+              setRenderedCenter((prev) => {
+                if (Math.abs(index - prev) > 1) return index;
+                return prev;
+              });
             }
           }
         }
@@ -113,17 +123,26 @@ export function Gallery({
     if (!container) return;
     if (!window.matchMedia('(pointer: fine)').matches) return;
 
+    let rafId = 0;
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      container.scrollLeft += e.deltaY + e.deltaX;
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        const raw = e.deltaY + e.deltaX;
+        const delta = Math.sign(raw) * Math.min(Math.abs(raw), 150);
+        container.scrollLeft += delta;
+      });
     };
 
     container.addEventListener('wheel', handleWheel, { passive: false });
-    return () => container.removeEventListener('wheel', handleWheel);
+    return () => {
+      container.removeEventListener('wheel', handleWheel);
+      cancelAnimationFrame(rafId);
+    };
   }, []);
 
   function shouldRenderImage(index: number): boolean {
-    return Math.abs(index - currentIndex) <= 2;
+    return Math.abs(index - renderedCenter) <= 3;
   }
 
   function setSlideRef(index: number, el: HTMLElement | null) {
@@ -204,7 +223,10 @@ export function Gallery({
                       />
                     </Link>
                   ) : (
-                    <div className="h-full" style={{ aspectRatio: '3/2' }} />
+                    <div
+                      className="h-full"
+                      style={{ aspectRatio: '3/2', width: 'calc(80vh * 3 / 2)' }}
+                    />
                   )}
                 </div>
                 <p
