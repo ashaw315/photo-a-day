@@ -38,6 +38,10 @@ export async function GET(request: Request) {
 
   const { id: fallbackId, image_url: imageUrl } = fallback.rows[0];
 
+  if (!imageUrl || typeof imageUrl !== 'string' || !imageUrl.startsWith('http')) {
+    throw new Error(`Fallback image ${fallbackId} has invalid URL: ${imageUrl}`);
+  }
+
   // Fetch the image to generate a caption
   const imageResponse = await fetch(imageUrl);
   const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
