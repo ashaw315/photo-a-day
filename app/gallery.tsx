@@ -17,13 +17,8 @@ export function Gallery({
   );
   const [loading, setLoading] = useState(false);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
-  // Track visible index in a ref to avoid re-renders on every scroll tick.
-  // Only promote to state when the rendered window actually needs to shift.
-  const currentIndexRef = useRef(0);
-  const [renderedCenter, setRenderedCenter] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const slideRefs = useRef<Map<number, HTMLElement>>(new Map());
 
   const loadMore = useCallback(async () => {
     if (loading || !nextCursor) return;
@@ -45,8 +40,6 @@ export function Gallery({
     const data = await res.json();
     setAllPosts(data.posts);
     setNextCursor(data.nextCursor);
-    currentIndexRef.current = 0;
-    setRenderedCenter(0);
     setLoading(false);
   }, []);
 
@@ -67,38 +60,6 @@ export function Gallery({
     observer.observe(sentinel);
     return () => observer.disconnect();
   }, [loadMore]);
-
-  // IntersectionObserver to track current visible slide.
-  // Updates a ref (no re-render) and only promotes to state when
-  // the rendered window needs to shift (> 1 slide from center).
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            const index = Number(entry.target.getAttribute('data-index'));
-            if (!isNaN(index)) {
-              currentIndexRef.current = index;
-              setRenderedCenter((prev) => {
-                if (Math.abs(index - prev) > 1) return index;
-                return prev;
-              });
-            }
-          }
-        }
-      },
-      { root: container, threshold: 0.5 }
-    );
-
-    for (const [, el] of slideRefs.current) {
-      observer.observe(el);
-    }
-
-    return () => observer.disconnect();
-  }, [allPosts.length]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -141,18 +102,6 @@ export function Gallery({
     };
   }, []);
 
-  function shouldRenderImage(index: number): boolean {
-    return Math.abs(index - renderedCenter) <= 3;
-  }
-
-  function setSlideRef(index: number, el: HTMLElement | null) {
-    if (el) {
-      slideRefs.current.set(index, el);
-    } else {
-      slideRefs.current.delete(index);
-    }
-  }
-
   if (allPosts.length === 0) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -193,63 +142,49 @@ export function Gallery({
         className="no-scrollbar flex h-screen overflow-x-auto overflow-y-hidden items-end"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
-        {/* Render posts newest-first (already ORDER BY date DESC from API) */}
-        {allPosts.map((post, index) => {
-          const isFirst = index === 0;
-          const isLast = index === allPosts.length - 1;
-
-          return (
-            <article
-              key={post.id}
-              ref={(el) => setSlideRef(index, el)}
-              data-index={index}
-              className="w-screen flex-shrink-0 overflow-hidden md:w-auto"
-              style={{
-                paddingLeft: isFirst ? '48px' : '24px',
-                paddingRight: isLast ? '48px' : '24px',
-              }}
+        {allPosts.map((post, index) => (
+          <article
+            key={post.id}
+            className="w-screen flex-shrink-0 overflow-hidden md:w-auto"
+            style={{
+              paddingLeft: index === 0 ? '48px' : '24px',
+              paddingRight: index === allPosts.length - 1 ? '48px' : '24px',
+            }}
+          >
+            <div
+              className="flex flex-col items-start"
+              style={{ paddingBottom: 'env(safe-area-inset-bottom, 24px)' }}
             >
-              <div
-                className="flex flex-col items-start"
-                style={{ paddingBottom: 'env(safe-area-inset-bottom, 24px)' }}
-              >
-                <div className="img-slot">
-                  {shouldRenderImage(index) ? (
-                    <Link href={`/photo/${post.date}`} className="block h-full">
-                      <img
-                        src={post.image_url}
-                        alt={post.caption}
-                        className="h-full w-auto object-contain"
-                      />
-                    </Link>
-                  ) : (
-                    <div
-                      className="h-full"
-                      style={{ aspectRatio: '3/2', width: 'calc(80vh * 3 / 2)' }}
-                    />
-                  )}
-                </div>
-                <p
-                  className="mt-2 font-sans"
-                  style={{ fontSize: '13px', fontWeight: 300, color: 'var(--color-caption)' }}
-                >
-                  {post.caption}
-                </p>
-                <time
-                  className="mt-1 block font-sans"
-                  style={{ fontSize: '11px', fontWeight: 300, color: 'var(--color-meta)' }}
-                >
-                  {new Date(post.date).toLocaleDateString('en-US', {
-                    timeZone: 'UTC',
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                </time>
+              <div className="img-slot">
+                <Link href={`/photo/${post.date}`} className="block h-full">
+                  <img
+                    src={post.image_url}
+                    alt={post.caption}
+                    loading="lazy"
+                    className="h-full w-auto object-contain"
+                  />
+                </Link>
               </div>
-            </article>
-          );
-        })}
+              <p
+                className="mt-2 font-sans"
+                style={{ fontSize: '13px', fontWeight: 300, color: 'var(--color-caption)' }}
+              >
+                {post.caption}
+              </p>
+              <time
+                className="mt-1 block font-sans"
+                style={{ fontSize: '11px', fontWeight: 300, color: 'var(--color-meta)' }}
+              >
+                {new Date(post.date).toLocaleDateString('en-US', {
+                  timeZone: 'UTC',
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+              </time>
+            </div>
+          </article>
+        ))}
 
         {/* Sentinel for infinite scroll (loads older posts) */}
         <div ref={sentinelRef} className="h-full w-px flex-shrink-0" />
