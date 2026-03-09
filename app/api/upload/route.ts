@@ -4,6 +4,7 @@ import { validateApiKey } from '@/lib/auth';
 import { uploadImage } from '@/lib/r2';
 import { generateCaption, pickRandomStyle } from '@/lib/caption';
 import { sql } from '@/lib/db';
+import { getTodayEST } from '@/lib/date';
 
 export async function POST(request: Request) {
   const authHeader = request.headers.get('authorization');
@@ -21,7 +22,7 @@ export async function POST(request: Request) {
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayEST();
 
   // Check if a post already exists for today
   const existing = await sql`SELECT id FROM posts WHERE date = ${today}`;

@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { generateCaption, pickRandomStyle } from '@/lib/caption';
+import { getTodayEST } from '@/lib/date';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayEST();
 
   // Check if post already exists for today
   const existing = await sql`
