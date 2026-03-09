@@ -46,7 +46,8 @@ export async function generateCaption(
       if (textBlock && textBlock.type === 'text') {
         return { caption: textBlock.text.trim(), style };
       }
-    } catch {
+    } catch (error) {
+      console.error(`[caption] Attempt ${attempt + 1} failed:`, error instanceof Error ? error.message : error);
       if (attempt === 1) {
         return { caption: '—', style };
       }

@@ -23,6 +23,12 @@ vi.mock('@/lib/db', () => ({
 describe('POST /api/upload', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.R2_PUBLIC_URL = 'https://pub-test.r2.dev';
+    process.env.R2_BUCKET_NAME = 'test-bucket';
+    process.env.R2_ACCOUNT_ID = 'test-account';
+    process.env.R2_ACCESS_KEY_ID = 'test-key';
+    process.env.R2_SECRET_ACCESS_KEY = 'test-secret';
+    process.env.ANTHROPIC_API_KEY = 'test-anthropic-key';
   });
 
   it('rejects requests without valid API key', async () => {

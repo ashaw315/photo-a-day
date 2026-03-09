@@ -6,7 +6,25 @@ import { generateCaption, pickRandomStyle } from '@/lib/caption';
 import { sql } from '@/lib/db';
 import { getTodayEST } from '@/lib/date';
 
+const REQUIRED_ENV_VARS = [
+  'R2_PUBLIC_URL',
+  'R2_BUCKET_NAME',
+  'R2_ACCOUNT_ID',
+  'R2_ACCESS_KEY_ID',
+  'R2_SECRET_ACCESS_KEY',
+  'ANTHROPIC_API_KEY',
+] as const;
+
 export async function POST(request: Request) {
+  const missing = REQUIRED_ENV_VARS.filter((v) => !process.env[v]);
+  if (missing.length > 0) {
+    console.error('Missing environment variables:', missing.join(', '));
+    return NextResponse.json(
+      { error: `Server misconfiguration: missing env vars: ${missing.join(', ')}` },
+      { status: 500 }
+    );
+  }
+
   const authHeader = request.headers.get('authorization');
   if (!validateApiKey(authHeader)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -36,6 +54,15 @@ export async function POST(request: Request) {
 
   // Upload image to R2 first
   const imageUrl = await uploadImage(key, buffer, file.type);
+  console.log('[upload] imageUrl:', imageUrl, '| key:', key, '| R2_PUBLIC_URL:', process.env.R2_PUBLIC_URL);
+
+  if (!imageUrl || !imageUrl.startsWith('http')) {
+    console.error('[upload] Invalid imageUrl after R2 upload:', imageUrl);
+    return NextResponse.json(
+      { error: 'Upload failed: invalid image URL returned from storage' },
+      { status: 500 }
+    );
+  }
 
   // Generate AI caption
   const style = pickRandomStyle();
