@@ -1,7 +1,7 @@
 // app/api/cron/fallback/route.ts
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
-import { generateCaption, pickRandomStyle } from '@/lib/caption';
+import { generateCaption } from '@/lib/caption';
 import { getTodayEST } from '@/lib/date';
 
 export const dynamic = 'force-dynamic';
@@ -48,8 +48,7 @@ export async function GET(request: Request) {
   const contentType = imageResponse.headers.get('content-type') || 'image/jpeg';
   const mediaType = contentType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
 
-  const style = pickRandomStyle();
-  const { caption, style: usedStyle } = await generateCaption(imageBuffer, mediaType, style);
+  const { caption } = await generateCaption(imageBuffer, mediaType);
 
   // Insert post and mark fallback as used — in a transaction
   const client = await sql.connect();
@@ -57,7 +56,7 @@ export async function GET(request: Request) {
     await client.sql`BEGIN`;
     await client.sql`
       INSERT INTO posts (image_url, caption, caption_style, date, is_fallback)
-      VALUES (${imageUrl}, ${caption}, ${usedStyle}, ${today}, true)
+      VALUES (${imageUrl}, ${caption}, ${'descriptive'}, ${today}, true)
     `;
     await client.sql`
       UPDATE fallback_images SET used = true, used_date = ${today}

@@ -5,7 +5,6 @@ const mockSql = vi.fn();
 vi.mock('@/lib/db', () => ({ sql: mockSql }));
 
 vi.mock('@/lib/caption', () => ({
-  pickRandomStyle: vi.fn().mockReturnValue('descriptive'),
   generateCaption: vi.fn().mockResolvedValue({ caption: 'A quiet street at dusk', style: 'descriptive' }),
 }));
 

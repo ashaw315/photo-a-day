@@ -30,8 +30,8 @@ export default async function PhotoPage({ params }: Props) {
     WITH target AS (
       SELECT
         id, image_url, caption, caption_style, date, is_fallback, created_at,
-        LAG(date) OVER (ORDER BY date) AS prev_date,
-        LEAD(date) OVER (ORDER BY date) AS next_date
+        LAG(date) OVER (ORDER BY date) AS older_date,
+        LEAD(date) OVER (ORDER BY date) AS newer_date
       FROM posts
     )
     SELECT * FROM target WHERE date = ${date} LIMIT 1
@@ -50,13 +50,14 @@ export default async function PhotoPage({ params }: Props) {
     updated_at: row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at,
   } as Post;
 
-  const prevDate = row.prev_date instanceof Date
-    ? row.prev_date.toISOString().split('T')[0]
-    : (row.prev_date as string | null);
+  // left arrow = older post, right arrow = newer post
+  const prevDate = row.older_date instanceof Date
+    ? row.older_date.toISOString().split('T')[0]
+    : (row.older_date as string | null);
 
-  const nextDate = row.next_date instanceof Date
-    ? row.next_date.toISOString().split('T')[0]
-    : (row.next_date as string | null);
+  const nextDate = row.newer_date instanceof Date
+    ? row.newer_date.toISOString().split('T')[0]
+    : (row.newer_date as string | null);
 
   return <PhotoView post={post} prevDate={prevDate} nextDate={nextDate} />;
 }

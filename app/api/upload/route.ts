@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { validateApiKey } from '@/lib/auth';
 import { uploadImage } from '@/lib/r2';
-import { generateCaption, pickRandomStyle } from '@/lib/caption';
+import { generateCaption } from '@/lib/caption';
 import { sql } from '@/lib/db';
 import { getTodayEST } from '@/lib/date';
 
@@ -65,14 +65,13 @@ export async function POST(request: Request) {
   }
 
   // Generate AI caption
-  const style = pickRandomStyle();
-  const { caption, style: usedStyle } = await generateCaption(buffer, mediaType, style);
+  const { caption } = await generateCaption(buffer, mediaType);
 
   // Insert into database
   await sql`
     INSERT INTO posts (image_url, caption, caption_style, date, is_fallback)
-    VALUES (${imageUrl}, ${caption}, ${usedStyle}, ${today}, false)
+    VALUES (${imageUrl}, ${caption}, ${'descriptive'}, ${today}, false)
   `;
 
-  return NextResponse.json({ success: true, caption, style: usedStyle, date: today });
+  return NextResponse.json({ success: true, caption, style: 'descriptive', date: today });
 }

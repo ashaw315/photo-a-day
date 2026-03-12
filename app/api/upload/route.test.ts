@@ -10,8 +10,7 @@ vi.mock('@/lib/r2', () => ({
 }));
 
 vi.mock('@/lib/caption', () => ({
-  pickRandomStyle: vi.fn().mockReturnValue('poetic'),
-  generateCaption: vi.fn().mockResolvedValue({ caption: 'Light dances on still water', style: 'poetic' }),
+  generateCaption: vi.fn().mockResolvedValue({ caption: 'A quiet street at dusk', style: 'descriptive' }),
 }));
 
 vi.mock('@/lib/db', () => ({

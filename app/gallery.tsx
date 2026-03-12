@@ -61,7 +61,7 @@ export function Gallery({
     return () => observer.disconnect();
   }, [loadMore]);
 
-  // Keyboard navigation
+  // Keyboard navigation (desktop only)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       const container = containerRef.current;
@@ -78,11 +78,12 @@ export function Gallery({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Vertical scroll → horizontal scroll mapping (mouse/trackpad only, not touch)
+  // Vertical scroll → horizontal scroll mapping (desktop with fine pointer only)
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
     if (!window.matchMedia('(pointer: fine)').matches) return;
+    if (window.matchMedia('(max-width: 768px)').matches) return;
 
     let rafId = 0;
     const handleWheel = (e: WheelEvent) => {
@@ -136,43 +137,41 @@ export function Gallery({
         </select>
       </header>
 
-      {/* Horizontal scroll container — film strip layout */}
+      {/* Gallery container — vertical on mobile, horizontal on desktop */}
       <div
         ref={containerRef}
-        className="no-scrollbar flex h-screen overflow-x-auto overflow-y-hidden items-end"
+        className="no-scrollbar flex flex-col overflow-y-auto overflow-x-hidden pt-14 md:flex-row md:h-screen md:overflow-x-auto md:overflow-y-hidden md:items-center md:pt-0"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         {allPosts.map((post, index) => (
           <article
             key={post.id}
-            className="w-screen flex-shrink-0 overflow-hidden md:w-auto"
-            style={{
-              paddingLeft: index === 0 ? '48px' : '24px',
-              paddingRight: index === allPosts.length - 1 ? '48px' : '24px',
-            }}
+            className={`w-full flex-shrink-0 overflow-hidden px-4 pb-6 md:w-auto md:pb-0 ${
+              index === 0 ? 'md:pl-12' : 'md:pl-6'
+            } ${index === allPosts.length - 1 ? 'md:pr-12' : 'md:pr-6'}`}
           >
             <div
-              className="flex flex-col items-start"
+              className="flex flex-col items-center md:items-start"
               style={{ paddingBottom: 'env(safe-area-inset-bottom, 24px)' }}
             >
-              <div className="img-slot">
-                <Link href={`/photo/${post.date}`} className="block h-full">
+              <div className="img-slot w-full md:w-auto">
+                <Link href={`/photo/${post.date}`} className="flex h-full w-full items-center justify-center md:block">
                   <img
                     src={post.image_url}
                     alt={post.caption}
                     loading="lazy"
-                    className="h-full w-auto object-contain"
+                    className="max-h-full w-auto object-contain md:h-full"
                   />
                 </Link>
               </div>
               <p
-                className="mt-2 font-sans"
+                className="mt-2 font-sans px-2 md:px-0"
                 style={{ fontSize: '13px', fontWeight: 300, color: 'var(--color-caption)' }}
               >
                 {post.caption}
               </p>
               <time
-                className="mt-1 block font-sans"
+                className="mt-1 block font-sans px-2 md:px-0"
                 style={{ fontSize: '11px', fontWeight: 300, color: 'var(--color-meta)' }}
               >
                 {new Date(post.date).toLocaleDateString('en-US', {
@@ -186,8 +185,8 @@ export function Gallery({
           </article>
         ))}
 
-        {/* Sentinel for infinite scroll (loads older posts) */}
-        <div ref={sentinelRef} className="h-full w-px flex-shrink-0" />
+        {/* Sentinel for infinite scroll */}
+        <div ref={sentinelRef} className="h-px w-full flex-shrink-0 md:h-full md:w-px" />
       </div>
     </div>
   );

@@ -12,23 +12,23 @@ describe('generateCaption', () => {
     mockCreate.mockReset();
   });
 
-  it('returns a caption with the chosen style', async () => {
+  it('returns a descriptive caption', async () => {
     mockCreate.mockResolvedValue({
-      content: [{ type: 'text', text: 'Golden light spills across the quiet morning road' }],
+      content: [{ type: 'text', text: 'A quiet street lined with autumn trees' }],
     });
 
     const { generateCaption } = await import('./caption');
-    const result = await generateCaption(Buffer.from('fake'), 'image/jpeg', 'poetic');
+    const result = await generateCaption(Buffer.from('fake'), 'image/jpeg');
 
-    expect(result.caption).toBe('Golden light spills across the quiet morning road');
-    expect(result.style).toBe('poetic');
+    expect(result.caption).toBe('A quiet street lined with autumn trees');
+    expect(result.style).toBe('descriptive');
   });
 
   it('returns placeholder on API failure after retry', async () => {
     mockCreate.mockRejectedValue(new Error('API down'));
 
     const { generateCaption } = await import('./caption');
-    const result = await generateCaption(Buffer.from('fake'), 'image/jpeg', 'descriptive');
+    const result = await generateCaption(Buffer.from('fake'), 'image/jpeg');
 
     expect(result.caption).toBe('—');
     expect(result.style).toBe('descriptive');
